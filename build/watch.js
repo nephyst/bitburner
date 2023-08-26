@@ -21,7 +21,7 @@ async function syncStatic() {
       return ext && !allowedFiletypes.includes(ext);
     },
     async afterEachSync(event) {
-      console.log(event);
+      //console.log(event);
 
       //Hack to comment out first line
       fs.readFile(event.targetPath, 'utf8', (err, content) => {

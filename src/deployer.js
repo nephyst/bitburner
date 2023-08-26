@@ -51,7 +51,7 @@ export async function main(ns) {
 
                 }
 
-                if (ns.hasRootAccess(server) && !ns.fileExists("/shared/hack.js", server)) {
+                if (ns.hasRootAccess(server) && !ns.fileExists("/util/hack.js", server)) {
                     await ns.scp([
                         "/util/weaken.js",
                         "/util/grow.js",
@@ -83,8 +83,8 @@ export async function main(ns) {
 
             let moneyThresh = ns.getServerMaxMoney(target) * 0.75;
             let securityThresh = ns.getServerMinSecurityLevel(target) + 5;
-            let ramPerThread = ns.getScriptRam("/shared/weaken.js");
 
+            let ramPerThread = ns.getScriptRam("/util/weaken.js");
             let ramAvailable = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
             let threads = Math.floor(ramAvailable / ramPerThread);
 
@@ -92,13 +92,13 @@ export async function main(ns) {
             if (threads > 0) {
                 if (ns.getServerSecurityLevel(target) > securityThresh) {
                     sleepTime = Math.max(sleepTime, ns.getWeakenTime(target));
-                    script = "/shared/weaken.js";
+                    script = "/util/weaken.js";
                 } else if (ns.getServerMoneyAvailable(target) < moneyThresh) {
                     sleepTime = Math.max(sleepTime, ns.getGrowTime(target));
-                    script = "/shared/grow.js";
+                    script = "/util/grow.js";
                 } else {
                     sleepTime = Math.max(sleepTime, ns.getHackTime(target));
-                    script = "/shared/hack.js";
+                    script = "/util/hack.js";
                 }
                 ns.toast(sprintf("%s using %s on %s with %i threads for %i seconds", server, script, target, threads, ns.formatNumber(sleepTime / 1000.0, 3)), "info", 10000);
                 ns.exec(script, server, threads, target);

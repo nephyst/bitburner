@@ -12,7 +12,7 @@ If you need help with your particular system, feel free to ask for help in the O
 - Install it. Just click next, next, next, next, finish.
 	
 ### 3. Download this:
-- Go to https://github.com/bitburner-official/typescript-template  
+- Go to https://github.com/nephyst/bitburner
 - Click the green 'Code' button
 - If you're unfamiliar with Git and have no intention to use it:
   - Press the Download Zip button
