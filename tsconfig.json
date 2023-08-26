@@ -1,6 +1,11 @@
 {
-  "include": ["NetscriptDefinitions.d.ts", "src/**/*"],
-  "exclude": ["src/lib/react.ts"],
+  "include": [
+    "NetscriptDefinitions.d.ts",
+    "src/**/*"
+  ],
+  "exclude": [
+    "src/lib/react.ts"
+  ],
   "compilerOptions": {
     "module": "esnext",
     "target": "esnext",
@@ -8,8 +13,8 @@
     "noImplicitReturns": true,
     "noImplicitThis": true,
     "esModuleInterop": true,
-    "inlineSourceMap": true,
-    "inlineSources": true,
+    "inlineSourceMap": false,
+    "inlineSources": false,
     "strict": true,
     "rootDir": "src/",
     "outDir": "dist/",
@@ -17,9 +22,15 @@
     "allowJs": true,
     "jsx": "react",
     "paths": {
-      "/*": ["*"],
-      "@ns": ["../NetscriptDefinitions.d.ts"],
-      "@react": ["lib/react.ts"]
+      "/*": [
+        "*"
+      ],
+      "@ns": [
+        "../NetscriptDefinitions.d.ts"
+      ],
+      "@react": [
+        "lib/react.ts"
+      ]
     }
   }
 }

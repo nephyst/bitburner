@@ -21,6 +21,29 @@ async function syncStatic() {
       return ext && !allowedFiletypes.includes(ext);
     },
     async afterEachSync(event) {
+      console.log(event);
+
+      //Hack to comment out first line
+      fs.readFile(event.targetPath, 'utf8', (err, content) => {
+        if (err) {
+          console.error('Error reading file:', err);
+          return;
+        }
+
+        const lines = content.split('\n');
+        if (lines.length > 0) {
+          lines[0] = "//" + lines[0]; // Add the character to the start of the first line
+        }
+
+        const modifiedContent = lines.join('\n');
+
+        fs.writeFile(event.targetPath, modifiedContent, 'utf8', (err) => {
+          if (err) {
+            console.error('Error writing to file:', err);
+          }
+        });
+      });
+
       // log file action
       let eventType;
       if (event.eventType === 'add' || event.eventType === 'init:copy') {
@@ -90,4 +113,4 @@ async function syncTypeScript() {
 
 console.log('Start watching static and ts files...');
 syncStatic();
-syncTypeScript();
+//syncTypeScript();
