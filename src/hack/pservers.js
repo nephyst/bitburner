@@ -40,7 +40,6 @@ export async function main(ns) {
         await ns.sleep(100);
     }
 
-
     async function doPurchase(server, ram) {
         ns.print("purchase %s %s", server, ram)
         let money = ns.getServerMoneyAvailable("home");
@@ -82,7 +81,7 @@ export async function main(ns) {
             ns.upgradePurchasedServer(prevServer, ram);
             ns.renamePurchasedServer(prevServer, server);
             ns.printf("▲ %s ⇒ %s: $%s", prevServer, server, ns.formatNumber(cost, "0.000a"));
-            ns.toast(sprintf("▲ %s: $%s", server, ns.formatNumber(cost, "0.000a")), "info", 20000);
+            ns.toast(sprintf("▲ %s ⇒ %s: $%s", prevServer, server, ns.formatNumber(cost, "0.000a")), "info", 20000);
             await ns.sleep(5000);
             servers = ns.getPurchasedServers();
         }

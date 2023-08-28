@@ -51,11 +51,11 @@ export async function main(ns) {
 
                 }
 
-                if (ns.hasRootAccess(server) && !ns.fileExists("/util/hack.js", server)) {
+                if (ns.hasRootAccess(server)) {
                     await ns.scp([
-                        "/util/weaken.js",
-                        "/util/grow.js",
-                        "/util/hack.js"
+                        "/hack/helper/weaken.js",
+                        "/hack/helper/grow.js",
+                        "/hack/helper/hack.js"
                     ], server);
                 }
 
@@ -84,7 +84,7 @@ export async function main(ns) {
             let moneyThresh = ns.getServerMaxMoney(target) * 0.75;
             let securityThresh = ns.getServerMinSecurityLevel(target) + 5;
 
-            let ramPerThread = ns.getScriptRam("/util/weaken.js");
+            let ramPerThread = ns.getScriptRam("/hack/helper/weaken.js");
             let ramAvailable = ns.getServerMaxRam(server) - ns.getServerUsedRam(server);
             let threads = Math.floor(ramAvailable / ramPerThread);
 
@@ -92,15 +92,15 @@ export async function main(ns) {
             if (threads > 0) {
                 if (ns.getServerSecurityLevel(target) > securityThresh) {
                     sleepTime = Math.max(sleepTime, ns.getWeakenTime(target));
-                    script = "/util/weaken.js";
+                    script = "/hack/helper/weaken.js";
                 } else if (ns.getServerMoneyAvailable(target) < moneyThresh) {
                     sleepTime = Math.max(sleepTime, ns.getGrowTime(target));
-                    script = "/util/grow.js";
+                    script = "/hack/helper/grow.js";
                 } else {
                     sleepTime = Math.max(sleepTime, ns.getHackTime(target));
-                    script = "/util/hack.js";
+                    script = "/hack/helper/hack.js";
                 }
-                ns.toast(sprintf("%s using %s on %s with %i threads for %i seconds", server, script, target, threads, ns.formatNumber(sleepTime / 1000.0, 3)), "info", 10000);
+                //ns.toast(sprintf("%s using %s on %s with %i threads for %i seconds", server, script, target, threads, ns.formatNumber(sleepTime / 1000.0, 3)), "info", 10000);
                 ns.exec(script, server, threads, target);
             }
 
