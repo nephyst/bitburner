@@ -15,9 +15,9 @@ export async function main(ns) {
         let server = toScan.name;
         let depth = toScan.depth;
 
-        if (!(server in servers) && server !== "home") {
+        if (!(server in servers) && server !== "home" && !server.startsWith("pserv")) {
             servers[server] = depth;
-            contracts[server] = ns.ls(server, ".cct").join(", ");
+            contracts[server] = ns.ls(server, ".cct");
             for (var potentialServer of ns.scan(server)) {
                 serversToScan.unshift({ name: potentialServer, depth: depth + 1 });
             }

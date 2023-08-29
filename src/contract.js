@@ -2,20 +2,17 @@ import { NS } from "@ns";
 /** @param {NS} ns **/
 export async function main(ns) {
 
-    let servers = getServers(ns);
-
-    servers.forEach(server => {
+    getServers(ns).forEach(server => {
         let hostname = server.name;
 
         ns.ls(hostname, ".cct").forEach(contract => {
-            ns.toast(contract);
             let answer = solveContract(ns, hostname, contract);
             let type = ns.codingcontract.getContractType(contract, hostname);
             if (answer !== null) {
                 let result = ns.codingcontract.attempt(answer, contract, hostname);
-                ns.tprint(hostname + "-" + type + ": " + result);
+                ns.tprintf("%s - %s: %s", hostname, type, result);
             } else {
-                ns.tprint("Solver needed for " + type);
+                ns.tprintf("Solver needed for %s on %s", type, hostname);
             }
         });
 
@@ -96,9 +93,7 @@ function solveContract(ns, hostname, contract) {
         case "Algorithmic Stock Trader III":
             return null;
         case "Algorithmic Stock Trader IV":
-            let a = ast(ns, data[0], data[1]);
-            ns.tprint("A " + a);
-            return a;
+            return ast(ns, data[0], data[1]);
         case "Minimum Path Sum in a Triangle":
             return null;
         case "Unique Paths in a Grid I":
@@ -122,7 +117,7 @@ function solveContract(ns, hostname, contract) {
 
             return Array.from(results);
         case "Find All Valid Math Expressions":
-            return null;
+            return allValidExpressions(ns, data[0], data[1]).toString();
         default:
             return null;
 
@@ -262,12 +257,50 @@ function sph(data, results, left, right, i, pairs, solution) {
     }
 }
 
-
 function oppositeSigns(x, y) {
     if (x === 0 || y === 0) {
         return false;
     }
     return ((x ^ y) < 0);
+}
+
+let validExpressions = {};
+function allValidExpressions(ns, expression, target) {
+
+    let key = target + "=" + expression;
+    if (key in validExpressions) {
+        return validExpressions[key];
+    }
+
+    let solutions = [];
+
+    if (eval(expression) == target) {
+        solutions.push(expression);
+    }
+
+    for (let i = 1; i < expression.length; i++) {
+        let leftSide = expression.slice(0, i);
+        let rightSide = expression.slice(i);
+        let leftSideTotal = eval(leftSide);
+
+        allValidExpressions(ns, rightSide, target - leftSideTotal).forEach((s) => {
+            solutions.push(leftSide + "+" + s);
+        })
+
+        allValidExpressions(ns, rightSide, leftSideTotal - target).forEach((s) => {
+            solutions.push(leftSide + "-" + s);
+        });
+
+        let multiplyTarget = target / leftSide;
+        if (Math.floor(multiplyTarget) === multiplyTarget) {
+            allValidExpressions(ns, rightSide, multiplyTarget).forEach((s) => {
+                solutions.push(leftSide + "*" + s);
+            });
+        }
+    }
+
+    validExpressions[key] = solutions;
+    return solutions;
 }
 
 function getServers(ns) {
