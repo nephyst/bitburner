@@ -5,6 +5,8 @@ export async function main(ns) {
     ns.disableLog("sleep");
     ns.disableLog("getServerMoneyAvailable");
 
+
+    let symbols = ["+ ", "▲L ", "▲R ", "▲C "]
     let spent = new Array(4).fill(0);
 
     while (true) {
@@ -57,21 +59,11 @@ export async function main(ns) {
 
         if (!bought) {
 
-            if (spent[0]) {
-                ns.toast(sprintf("+ $%s;  ", ns.formatNumber(spent[0], "0.000a")), "info", 10000);
-                spent[0] = 0;
-            }
-            if (spent[1]) {
-                ns.toast(sprintf("▲L $%s;  ", ns.formatNumber(spent[1], "0.000a")), "info", 10000);
-                spent[1] = 0;
-            }
-            if (spent[2]) {
-                ns.toast(sprintf("▲R $%s;  ", ns.formatNumber(spent[2], "0.000a")), "info", 10000);
-                spent[2] = 0;
-            }
-            if (spent[3]) {
-                ns.toast(sprintf("▲C $%s;  ", ns.formatNumber(spent[3], "0.000a")), "info", 10000);
-                spent[3] = 0;
+            for (let i = 0; i < 4; i++) {
+                if (spent[i]) {
+                    ns.toast(sprintf("%s$%s;  ", symbols[i], ns.formatNumber(spent[i], "0.000a")), "info", 10000);
+                    spent[i] = 0;
+                }
             }
 
             await ns.sleep(5000);
