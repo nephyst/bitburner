@@ -55,7 +55,7 @@ export async function main(ns) {
         while (!servers.includes(server)) {
             ns.purchaseServer(server, ram);
             ns.printf("$ %s: $%s", server, ns.formatNumber(cost, "0.000a"));
-            ns.toast(sprintf("$ %s: $%s", server, ns.formatNumber(cost, "0.000a")), "info", 20000);
+            ns.toast(sprintf("$ %s: $%s", server, ns.formatNumber(cost, "0.000a")), "info", 10000);
             await ns.sleep(5000);
             servers = ns.getPurchasedServers();
         }
@@ -80,8 +80,8 @@ export async function main(ns) {
         while (!servers.includes(server)) {
             ns.upgradePurchasedServer(prevServer, ram);
             ns.renamePurchasedServer(prevServer, server);
-            ns.printf("▲ %s ⇒ %s: $%s", prevServer, server, ns.formatNumber(cost, "0.000a"));
-            ns.toast(sprintf("▲ %s ⇒ %s: $%s", prevServer, server, ns.formatNumber(cost, "0.000a")), "info", 20000);
+            ns.printf("▲ %s ⇒ %s: $%s", prevServer, server.split("-")[1], ns.formatNumber(cost, "0.000a"));
+            ns.toast(sprintf("▲ %s ⇒ %s: $%s", prevServer, server.split("-")[1], ns.formatNumber(cost, "0.000a")), "info", 10000);
             servers = ns.getPurchasedServers();
             if (!servers.includes(server)) {
                 await ns.sleep(5000);

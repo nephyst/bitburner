@@ -8,8 +8,8 @@ export async function main(ns) {
     ns.disableLog("gang.setTerritoryWarfare");
     ns.disableLog("gang.purchaseEquipment");
 
-    while (!ns.gang.inGang()) {
-        ns.sleep(60000);
+    if (!ns.gang.inGang()) {
+        return;
     }
 
     let gang = ns.gang.getGangInformation();
