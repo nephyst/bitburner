@@ -82,8 +82,11 @@ export async function main(ns) {
             ns.renamePurchasedServer(prevServer, server);
             ns.printf("▲ %s ⇒ %s: $%s", prevServer, server, ns.formatNumber(cost, "0.000a"));
             ns.toast(sprintf("▲ %s ⇒ %s: $%s", prevServer, server, ns.formatNumber(cost, "0.000a")), "info", 20000);
-            await ns.sleep(5000);
             servers = ns.getPurchasedServers();
+            if (!servers.includes(server)) {
+                await ns.sleep(5000);
+                servers = ns.getPurchasedServers();
+            }
         }
     }
 }

@@ -6,6 +6,7 @@ export async function main(ns) {
         let hostname = server.name;
 
         ns.ls(hostname, ".cct").forEach(contract => {
+            //ns.tprintf(hostname + " " + contract);
             let answer = solveContract(ns, hostname, contract);
             let type = ns.codingcontract.getContractType(contract, hostname);
             if (answer !== null) {
@@ -23,8 +24,6 @@ export async function main(ns) {
 function solveContract(ns, hostname, contract) {
     let type = ns.codingcontract.getContractType(contract, hostname);
     let data = ns.codingcontract.getData(contract, hostname);
-
-    let results;
 
     switch (type) {
         case "Find Largest Prime Factor":
@@ -57,29 +56,31 @@ function solveContract(ns, hostname, contract) {
             }
             return ways[data];
         case "Spiralize Matrix":
-            results = [];
+            {
+                let results = [];
 
-            while (data.length > 0) {
-                results = results.concat(data.shift());
-                if (data.length === 0) {
-                    break;
+                while (data.length > 0) {
+                    results = results.concat(data.shift());
+                    if (data.length === 0) {
+                        break;
+                    }
+
+                    for (let i = 0; i < data.length; i++) {
+                        results.push(data[i].pop());
+                    }
+
+                    results = results.concat(data.pop().reverse());
+                    if (data.length === 0) {
+                        break;
+                    }
+
+                    for (let i = data.length; i > 0; i--) {
+                        results.push(data[i - 1].shift());
+                    }
                 }
 
-                for (let i = 0; i < data.length; i++) {
-                    results.push(data[i].pop());
-                }
-
-                results = results.concat(data.pop().reverse());
-                if (data.length === 0) {
-                    break;
-                }
-
-                for (let i = data.length; i > 0; i--) {
-                    results.push(data[i - 1].shift());
-                }
+                return results;
             }
-
-            return results;
         case "Array Jumping Game":
             return null;
         case "Merge Overlapping Intervals":
@@ -96,28 +97,32 @@ function solveContract(ns, hostname, contract) {
             return ast(ns, data[0], data[1]);
         case "Minimum Path Sum in a Triangle":
             return null;
+        case "Shortest Path in a Grid":
+            return null;
         case "Unique Paths in a Grid I":
             return null;
         case "Unique Paths in a Grid II":
             return null;
         case "Sanitize Parentheses in Expression":
-            let left = 0; //number of ( to remove
-            let right = 0; //number of ) to remove
+            {
+                let left = 0; //number of ( to remove
+                let right = 0; //number of ) to remove
 
-            for (let i = 0; i < data.length; ++i) {
-                if (data[i] === '(') {
-                    ++left;
-                } else if (data[i] === ')') {
-                    (left > 0) ? --left : ++right;
+                for (let i = 0; i < data.length; ++i) {
+                    if (data[i] === '(') {
+                        ++left;
+                    } else if (data[i] === ')') {
+                        (left > 0) ? --left : ++right;
+                    }
                 }
+
+                let results = new Set();
+                sph(data, results, left, right, 0, 0, "");
+
+                return Array.from(results);
             }
-
-            results = new Set();
-            sph(data, results, left, right, 0, 0, "");
-
-            return Array.from(results);
         case "Find All Valid Math Expressions":
-            return allValidExpressions(ns, data[0], data[1]).toString();
+            return null;
         default:
             return null;
 
@@ -262,45 +267,6 @@ function oppositeSigns(x, y) {
         return false;
     }
     return ((x ^ y) < 0);
-}
-
-let validExpressions = {};
-function allValidExpressions(ns, expression, target) {
-
-    let key = target + "=" + expression;
-    if (key in validExpressions) {
-        return validExpressions[key];
-    }
-
-    let solutions = [];
-
-    if (eval(expression) == target) {
-        solutions.push(expression);
-    }
-
-    for (let i = 1; i < expression.length; i++) {
-        let leftSide = expression.slice(0, i);
-        let rightSide = expression.slice(i);
-        let leftSideTotal = eval(leftSide);
-
-        allValidExpressions(ns, rightSide, target - leftSideTotal).forEach((s) => {
-            solutions.push(leftSide + "+" + s);
-        })
-
-        allValidExpressions(ns, rightSide, leftSideTotal - target).forEach((s) => {
-            solutions.push(leftSide + "-" + s);
-        });
-
-        let multiplyTarget = target / leftSide;
-        if (Math.floor(multiplyTarget) === multiplyTarget) {
-            allValidExpressions(ns, rightSide, multiplyTarget).forEach((s) => {
-                solutions.push(leftSide + "*" + s);
-            });
-        }
-    }
-
-    validExpressions[key] = solutions;
-    return solutions;
 }
 
 function getServers(ns) {
