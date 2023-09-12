@@ -26,11 +26,34 @@ export async function main(ns) {
 
     var output = "Servers:\n";
     for (const [key, value] of Object.entries(servers)) {
-        let c = "";
-        if (contracts[key].length > 0) {
-            c = "[" + contracts[key].join(", ") + "]";
+        let server = ns.getServer(key);
+        
+        let root = ns.hasRootAccess(key) ? "🔓" : "";
+        let backdoor = server.backdoorInstalled ? "🚪" : "";
+
+        let hasRam = server.maxRam;
+        let hasContracts = contracts[key].length > 0;
+        
+        let properties = "";
+        if (hasRam || hasContracts) {
+            properties += "(";
+
+            if (hasRam) {
+                properties += server.maxRam + " GB";
+            }
+
+            if (hasRam && hasContracts) {
+                properties += "; "
+            }
+
+            if (hasContracts) {
+                properties += contracts[key].length + " contracts";
+            }
+
+            properties += ")";
         }
-        output = output.concat(sprintf("%s%s %s\n", " ".repeat(value), key, c));
+
+        output = output.concat(sprintf("%s%s%s%s %s\n", " ".repeat(value), key, root, backdoor, properties));
     }
     ns.tprint(output);
 

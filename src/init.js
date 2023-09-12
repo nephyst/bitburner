@@ -2,7 +2,11 @@ import { NS } from "@ns";
 /** @param {NS} ns **/
 export async function main(ns) {
 
-    ns.run("/hack/pservers.js", 1, 1024);
+    ns.singularity.commitCrime("Rob Store", false);
+
+    ns.run("faction.js");
+    ns.run("/util/purchase.js");
+    ns.run("/hack/pservers.js", 1);
     ns.run("/hack/deployer.js", 1);
     ns.run("/gang/gang.js", 1);
     ns.run("/hacknet/hacknet.js", 1);
@@ -13,3 +17,6 @@ export async function main(ns) {
 
     ns.run("/hack/helper/share.js", threads);
 }
+
+
+// buy programs

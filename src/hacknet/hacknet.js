@@ -12,7 +12,7 @@ export async function main(ns) {
     while (true) {
         let bought = false;
         let numNodes = ns.hacknet.numNodes();
-        let costMulti = (2 * numNodes) + 1;
+        let costMulti = (3 * numNodes) + 1;
 
         for (let i = 0; i <= numNodes; i++) {
 
@@ -20,7 +20,7 @@ export async function main(ns) {
                 let money = ns.getServerMoneyAvailable("home");
                 let cost = ns.hacknet.getPurchaseNodeCost();
                 if (money > cost * costMulti) {
-                    ns.printf("Buying %s $%s", i, ns.formatNumber(cost, "0.000a"));
+                    ns.printf("Buying node%s $%s", i, ns.formatNumber(cost, "0.000a"));
                     ns.hacknet.purchaseNode();
                     bought = true;
                     spent[0] += cost;
@@ -31,7 +31,7 @@ export async function main(ns) {
                 var money = ns.getServerMoneyAvailable("home");
                 var cost = ns.hacknet.getLevelUpgradeCost(i);
                 if (money > cost * costMulti) {
-                    ns.printf("Level %s $%s", i, ns.formatNumber(cost, "0.000a"));
+                    ns.printf("Level node%s $%s", i, ns.formatNumber(cost, "0.000a"));
                     ns.hacknet.upgradeLevel(i);
                     bought = true;
                     spent[1] += cost;
@@ -40,7 +40,7 @@ export async function main(ns) {
                 money = ns.getServerMoneyAvailable("home");
                 cost = ns.hacknet.getRamUpgradeCost(i);
                 if (money > cost * costMulti) {
-                    ns.printf("RAM %s $%s", i, ns.formatNumber(cost, "0.000a"));
+                    ns.printf("RAM node%s $%s", i, ns.formatNumber(cost, "0.000a"));
                     ns.hacknet.upgradeRam(i);
                     bought = true;
                     spent[2] += cost;
@@ -49,7 +49,7 @@ export async function main(ns) {
                 money = ns.getServerMoneyAvailable("home");
                 cost = ns.hacknet.getCoreUpgradeCost(i);
                 if (money > cost * costMulti) {
-                    ns.printf("Core %s $%s", i, ns.formatNumber(cost, "0.000a"));
+                    ns.printf("Core node%s $%s", i, ns.formatNumber(cost, "0.000a"));
                     ns.hacknet.upgradeCore(i);
                     bought = true;
                     spent[3] += cost;
@@ -61,7 +61,7 @@ export async function main(ns) {
 
             for (let i = 0; i < 4; i++) {
                 if (spent[i]) {
-                    ns.toast(sprintf("%s$%s;  ", symbols[i], ns.formatNumber(spent[i], "0.000a")), "info", 10000);
+                    ns.toast(sprintf("%s$%s", symbols[i], ns.formatNumber(spent[i], "0.000a")), "info", 10000);
                     spent[i] = 0;
                 }
             }
