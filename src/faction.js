@@ -2,23 +2,44 @@ import { NS } from "@ns";
 /** @param {NS} ns **/
 export async function main(ns) {
 
-    while (true) {
+    ns.disableLog("sleep");
+    ns.disableLog("getHackingLevel");
+
+    loop: while (true) {
+        ns.print("---");
+        await ns.sleep(5000);
+
+        // Try Creating Scripts
+        await createScript("BruteSSH.exe", 50);
+        await createScript("FTPCrack.exe", 100);
+        await createScript("relaySMTP.exe", 250);
+        await createScript("HTTPWorm.exe", 500);
+        await createScript("SQLInject.exe", 750);
+
+        {
+            // Get hacking level to 250
+            let work = ns.singularity.getCurrentWork();
+            if (ns.getHackingLevel() <= 250) {
+                if (!work || work.type !== "CRIME" || work.crimeType !== "Rob Store") {
+                    ns.singularity.commitCrime("Rob Store", ns.singularity.isFocused());
+                }
+                continue;
+            }
+        }
 
         let player = ns.getPlayer();
         let playerAugs = ns.singularity.getOwnedAugmentations(true);
 
-        let TDH = "Tian Di Hui";
-        if (!player.factions.includes(TDH) && player.city !== "New Tokyo") {
-            for (let aug of ns.singularity.getAugmentationsFromFaction(TDH)) {
-                if (!playerAugs.includes(aug)) {
-                    ns.singularity.travelToCity("New Tokyo");
-                    break;
-                }
-            }
+        // Stay in Sector-12 for CashRoot Starter Kit
+        // TDH for Neuroreceptor Management Implant Augmentation
+        let needSector12 = needsRepForAugment("Sector-12") && !player.factions.includes("Sector-12");
+        let needsTDH = needsRepForAugment("Tian Di Hui") && !player.factions.includes("Tian Di Hui");
+        if (needsTDH && !needSector12 && player.city !== "New Tokyo") {
+            ns.singularity.travelToCity("New Tokyo");
         }
 
+        // Join factions
         faction: for (let faction of ns.singularity.checkFactionInvitations()) {
-            ns.printf("Possible faction: %s", faction);
             for (let aug of ns.singularity.getAugmentationsFromFaction(faction)) {
                 if (!playerAugs.includes(aug)) {
                     ns.toast(sprintf("Joining %s due to missing %s", faction, aug), "info", 10000);
@@ -28,75 +49,80 @@ export async function main(ns) {
             }
         }
 
+        // Filter out factions where reputation is high enough to afford all augmentations
+        let factionsToGrind = player.factions
+            .reverse()
+            .filter((faction) => needsRepForAugment(faction));
+
+        // Grind Faction Rep
         let doingWork = false;
-        for (let faction of player.factions) {
-            ns.printf("Checking player faction: %s", faction);
-            let favor = ns.singularity.getFactionFavor(faction);
-            let favorGain = ns.singularity.getFactionFavorGain(faction);
-
-            if (favor + favorGain > 150
-                || (favor > 20 && favorGain > 50)
-                || (favor == 0 && favorGain > 20)) {
-                ns.printf("Skipping %s: favor: %s; favorGain: %s", faction, favor, favorGain);
-                continue;
+        for (let shouldGrindReputation of [favorBelow(20), favorBelow(70), favorBelow(150), () => true]) {
+            for (let faction of factionsToGrind) {
+                var grindRep = shouldGrindReputation(faction);
+                if (grindRep) {
+                    let work = ns.singularity.getCurrentWork();
+                    if (!work || work.type !== "FACTION" || work.factionName !== faction) {
+                        let hacking = ns.singularity.workForFaction(faction, "hacking", ns.singularity.isFocused());
+                        if (!hacking) {
+                            ns.print("hacking failed");
+                            continue;
+                        }
+                    }
+                    ns.printf(" %s: hacking", faction);
+                    continue loop;
+                }
             }
-
-            let work = ns.singularity.getCurrentWork();
-            if (work.type !== "FACTION" || work.factionName !== faction) {
-                ns.printf("Working for %s", faction);
-                ns.singularity.workForFaction(faction, "hacking", false);
-            }
-            doingWork = true;
-            break;
         }
 
+        // Default to Homicide to lower karma
         if (!doingWork) {
             let work = ns.singularity.getCurrentWork();
-            if (work.type !== "CRIME" || work.crimeType !== "Rob Store") {
-                ns.singularity.commitCrime("Rob Store", false);
+            if (!work || work.type !== "CRIME" || work.crimeType !== "Homicide") {
+                ns.singularity.commitCrime("Homicide", ns.singularity.isFocused());
             }
-            //ns.singularity.commitCrime("Assassination", false);
         }
-
-        await ns.sleep(60000);
     }
 
+    function favorBelow(favorTarget) {
+        return (faction) => {
+            let favor = ns.singularity.getFactionFavor(faction);
+            let favorGain = ns.singularity.getFactionFavorGain(faction);
+            let isFavorBelow = favor + favorGain < favorTarget
+            ns.printf(" %s [%s < favorBelow(%s)] %s", faction, favor + favorGain, favorTarget, isFavorBelow);
+            return isFavorBelow;
+        }
+    }
 
+    function needsRepForAugment(faction) {
+        let playerAugs = ns.singularity.getOwnedAugmentations(true);
+        let factionRep = ns.singularity.getFactionRep(faction) + ns.singularity.getFactionFavorGain(faction);
 
-    // async function tianDiHui() {
-    //     let name = "Tian Di Hui";
+        for (let aug of ns.singularity.getAugmentationsFromFaction(faction)) {
+            if (playerAugs.includes(aug)) {
+                continue;
+            }
+            let augRepCost = ns.singularity.getAugmentationRepReq(aug);
+            ns.printf(" %s [%s] Reputation: %s / %s", faction, aug, ns.formatNumber(factionRep, 2), ns.formatNumber(augRepCost));
+            if (augRepCost > factionRep) {
+                return true;
+            }
+        }
+        return false;
 
-    //     //Faction Goal
-    //     let augs = ns.singularity.getOwnedAugmentations(true);
-    //     if (augs.includes("Neuroreceptor Management Implant")) {
-    //         return;
-    //     }
+    }
 
-    //     //Join Faction
-    //     let player = ns.getPlayer();
-    //     while (!player.factions.includes(name)) {
+    // Helper function to manually create a script
+    async function createScript(file, hackingLevel) {
+        if (ns.getHackingLevel() < hackingLevel) {
+            return;
+        }
 
-    //         if (ns.singularity.checkFactionInvitations().includes(name)) {
-    //             ns.singularity.joinFaction(name);
-    //             continue;
-    //         }
-
-    //         //City
-    //         if (player.city != "New Tokyo") {
-    //             ns.singularity.travelToCity("New Tokyo");
-    //         }
-
-    //         let work = ns.singularity.getCurrentWork();
-    //         if (work.type !== "CRIME" || work.crimeType !== "Rob Store") {
-    //             ns.singularity.commitCrime("Rob Store");
-    //         }
-
-    //         await ns.sleep(5000);
-    //         player = ns.getPlayer();
-    //     }
-
-    //     ns.singularity.workForFaction(name, "hacking");
-
-    // }
-
+        while (!ns.fileExists(file)) {
+            let work = ns.singularity.getCurrentWork();
+            if (!work || work.type !== "CREATE_PROGRAM" || work.programName !== file) {
+                ns.singularity.createProgram(file, ns.singularity.isFocused());
+            }
+            await ns.sleep(10000);
+        }
+    }
 }

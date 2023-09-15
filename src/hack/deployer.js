@@ -109,7 +109,6 @@ export async function main(ns) {
 
         ns.printf("\n└-- End Loop --- %i targets\n", targets.length);
         //ns.toast(sprintf("Refreshed instances with %i targets. %j", targets.length, targets),"info", 30000);
-        await ns.sleep(5000);
-
+        await ns.sleep(10000);
     }
 }

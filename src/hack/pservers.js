@@ -84,7 +84,7 @@ export async function main(ns) {
             ns.toast(sprintf("▲ %s ⇒ %s: $%s", prevServer, server.split("-")[1], ns.formatNumber(cost, "0.000a")), "info", 10000);
             servers = ns.getPurchasedServers();
             if (!servers.includes(server)) {
-                await ns.sleep(5000);
+                await ns.sleep(10000);
                 servers = ns.getPurchasedServers();
             }
         }

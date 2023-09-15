@@ -53,7 +53,7 @@ export async function main(ns) {
             properties += ")";
         }
 
-        output = output.concat(sprintf("%s%s%s%s %s\n", " ".repeat(value), key, root, backdoor, properties));
+        output = output.concat(sprintf("%s%s%s%s %s\n", "-".repeat(value), key, root, backdoor, properties));
     }
     ns.tprint(output);
 

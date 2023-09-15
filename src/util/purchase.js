@@ -29,10 +29,12 @@ export async function main(ns) {
                     ns.toast(sprintf("Purchased %s", file));
                     files.splice(i, 1);
                 }
+            } {
+                files.splice(i, 1);
             }
         }   
 
-        await ns.sleep(60000);
+        await ns.sleep(10000);
     }
 
     ns.toast("All files purchased.");

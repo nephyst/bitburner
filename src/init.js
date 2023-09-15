@@ -2,6 +2,8 @@ import { NS } from "@ns";
 /** @param {NS} ns **/
 export async function main(ns) {
 
+    ns.singularity.installAugmentations()
+
     ns.singularity.commitCrime("Rob Store", false);
 
     ns.run("faction.js");
