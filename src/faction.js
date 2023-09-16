@@ -8,7 +8,7 @@ export async function main(ns) {
 
     loop: while (true) {
         await ns.sleep(5000);
-        ns.print("\n");
+        //ns.print("\n");
 
         // Try Creating Scripts
         await createScript("BruteSSH.exe", 50);
@@ -50,13 +50,14 @@ export async function main(ns) {
             }
         }
 
-        ns.printf("Factions with augments:");
+        //ns.printf("Factions with augments:");
         // Filter out factions where reputation is high enough to afford all augmentations
         let factionsToGrind = player.factions
             .reverse()
+            .filter((faction) => ns.gang.getGangInformation()?.faction !== faction)
             .filter((faction) => needsRepForAugment(faction));
 
-        ns.printf("Grind faction rep:");
+        //ns.printf("Grind faction rep:");
         // Grind Faction Rep
         let doingWork = false;
         for (let shouldGrindReputation of [favorBelow(20), favorBelow(70), favorBelow(150), attemptToDonate()]) {
@@ -93,8 +94,14 @@ export async function main(ns) {
         // Default to Homicide to lower karma
         if (!doingWork) {
             let work = ns.singularity.getCurrentWork();
-            if (!work || work.type !== "CRIME" || work.crimeType !== "Homicide") {
-                ns.singularity.commitCrime("Homicide", ns.singularity.isFocused());
+            if (ns.heart.break() > -54000) {
+                if (!work || work.type !== "CRIME" || work.crimeType !== "Homicide") {
+                    ns.singularity.commitCrime("Homicide", ns.singularity.isFocused());
+                }
+            } else {
+                if (!work || work.type !== "CRIME" || work.crimeType !== "Heist") {
+                    ns.singularity.commitCrime("Heist", ns.singularity.isFocused());
+                }
             }
         }
     }
@@ -104,7 +111,7 @@ export async function main(ns) {
             let favor = ns.singularity.getFactionFavor(faction);
             let favorGain = ns.singularity.getFactionFavorGain(faction);
             let isFavorBelow = favor + favorGain < favorTarget
-            ns.printf(" %s [%s < favorBelow(%s)] %s", faction, favor + favorGain, favorTarget, isFavorBelow);
+            ns.printf(" %s [favor %s < %s] %s", faction, ns.formatNumber(favor + favorGain, 2), favorTarget, isFavorBelow);
             return isFavorBelow;
         }
     }
@@ -123,10 +130,16 @@ export async function main(ns) {
         let playerAugs = ns.singularity.getOwnedAugmentations(true);
         let factionRep = ns.singularity.getFactionRep(faction) + ns.singularity.getFactionFavorGain(faction);
 
-        for (let aug of ns.singularity.getAugmentationsFromFaction(faction)) {
-            if (playerAugs.includes(aug)) {
-                continue;
-            }
+        let factionAugs = ns.singularity.getAugmentationsFromFaction(faction)
+            .filter((aug) => !playerAugs.includes(aug));
+
+        // Why this no work?
+        let sorted = factionAugs.sort((a, b) => {
+            let left = ns.singularity.getAugmentationRepReq(a);
+            let right = ns.singularity.getAugmentationRepReq(b);
+            return left - right;
+        });
+        for (let aug of sorted) {
             let augRepCost = ns.singularity.getAugmentationRepReq(aug);
             ns.printf(" %s [%s] Reputation: %s / %s", faction, aug, ns.formatNumber(factionRep, 2), ns.formatNumber(augRepCost));
             if (augRepCost > factionRep) {

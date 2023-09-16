@@ -17,7 +17,7 @@ export async function main(ns) {
     while (files.length > 0) {
         while (!ns.hasTorRouter()) {
             ns.singularity.purchaseTor(true);
-            await ns.sleep(60000);
+            await ns.sleep(10000);
         }
 
         let length = files.length;
@@ -26,10 +26,11 @@ export async function main(ns) {
             if (!ns.fileExists(file)) {
                 ns.singularity.purchaseProgram(file);
                 if (ns.fileExists(file)) {
-                    ns.toast(sprintf("Purchased %s", file));
+                    ns.toast(sprintf("Purchased %s", file), "info", 20000);
                     files.splice(i, 1);
                 }
-            } {
+            } else {
+                ns.toast(sprintf("Already have %s", file), "info", 20000);
                 files.splice(i, 1);
             }
         }   

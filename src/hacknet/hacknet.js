@@ -12,6 +12,9 @@ export async function main(ns) {
     while (true) {
         let bought = false;
         let numNodes = ns.hacknet.numNodes();
+        if (numNodes >= 20) {
+            break;
+        }
         let costMulti = (3 * numNodes) + 1;
 
         for (let i = 0; i <= numNodes; i++) {

@@ -6,7 +6,6 @@ export async function main(ns) {
     ns.disableLog("getServerMoneyAvailable");
     ns.disableLog("gang.setMemberTask");
     ns.disableLog("gang.setTerritoryWarfare");
-    ns.disableLog("gang.purchaseEquipment");
 
     if (!ns.gang.inGang()) {
         return;
@@ -23,7 +22,11 @@ export async function main(ns) {
                 || (gang.isHacking && type === "Rootkit")
                 || (!gang.isHacking && ["Weapon", "Armor", "Vehicle"].includes(type));
         })
-        .sort((a, b) => a.cost > b.cost);
+        .sort((a, b) => a.cost - b.cost);
+    
+    equipment.forEach((e) => {
+        ns.tprintf("%s, (%s) %s", e.name, ns.gang.getEquipmentType(e.name), e.cost);
+    })
 
 
     let lastTick = 0;
@@ -114,18 +117,19 @@ function getPowers(ns) {
 let justice = false;
 function assign(ns, isHacking, isTickNear) {
     let wantedPenalty = ns.gang.getGangInformation().wantedPenalty;
+    let wantedLevel = ns.gang.getGangInformation().wantedLevel;
     let territory = ns.gang.getGangInformation().territory;
 
     ns.gang.getMemberNames().forEach((name) => {
         if (isTickNear && territory < 1) {
             ns.gang.setMemberTask(name, "Territory Warfare");
-        } else if (wantedPenalty < 0.98) {
+        } else if (wantedPenalty < 0.98 && wantedLevel > 10) {
             justice = true;
             ns.gang.setMemberTask(name, "Vigilante Justice");
         // } else if (name == "BizarreReaper") {
         //     //ns.gang.setMemberTask(name, "Traffick Illegal Arms");
         //     ns.gang.setMemberTask(name, "Terrorism");
-        } else if (justice && wantedPenalty < 0.995) {
+        } else if (justice && wantedPenalty < 0.995 && wantedLevel > 10) {
             ns.gang.setMemberTask(name, "Vigilante Justice");
         } else if (isHacking) {
             justice = false;
@@ -145,7 +149,6 @@ function assign(ns, isHacking, isTickNear) {
             }
         }
     });
-
 }
 
 let recruitCount = 0;
@@ -181,15 +184,19 @@ function equip(ns, equipment) {
     for (let name of ns.gang.getMemberNames()) {
         let member = ns.gang.getMemberInformation(name);
 
-        equipment.some((equip) => {
+        equipment.forEach((equip) => {
             if (member.upgrades.includes(equip.name)) {
-                return false;
+                return;
             }
+            if (member.augmentations.includes(equip.name)) {
+                return;
+            }
+            //ns.printf("%s does not own %s yet", name, equip.name);
             if (ns.getServerMoneyAvailable("home") > equip.cost) {
+                //ns.printf("%s: purchasing %s", name, equip.name);
                 ns.gang.purchaseEquipment(name, equip.name);
             }
-            return true;
-        })
+        });
     }
 }
 

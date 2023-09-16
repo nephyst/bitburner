@@ -100,7 +100,24 @@ function solveContract(ns, hostname, contract) {
         case "Shortest Path in a Grid":
             return null;
         case "Unique Paths in a Grid I":
-            return null;
+            let rows = data[0];
+            let columns = data[1];
+
+            let currentRow = new Array(columns).fill(1);
+            let nextRow = new Array(columns);
+            for (let i = 1; i < rows; i++) {
+                //ns.tprint(currentRow);
+                nextRow[0] = 1;
+                for (let j = 1; j < columns; j++) {
+                    nextRow[j] = nextRow[j - 1] + currentRow[j];
+                }
+                currentRow = nextRow;
+            }
+            //ns.tprint(currentRow);
+            //ns.tprint(currentRow[columns - 1]);
+
+            //return null;
+            return currentRow[columns - 1];
         case "Unique Paths in a Grid II":
             return null;
         case "Sanitize Parentheses in Expression":
@@ -123,6 +140,48 @@ function solveContract(ns, hostname, contract) {
             }
         case "Find All Valid Math Expressions":
             return null;
+        case "Compression I: RLE Compression": {
+            //ns.tprint(data);
+            let result = "";
+
+            let curChar = null;
+            let charCount = 0;
+            for (let i in data) {
+                let c = data[i];
+                if (c == curChar && charCount < 9) {
+                    charCount++;
+                    //ns.tprintf("c: %s  curr: %s count: %s", c, curChar, charCount)
+                } else {
+                    if (curChar) {
+                        //ns.tprintf("appending %s %s", curChar, charCount);
+                        result = result.concat(charCount).concat(curChar);
+                    }
+                    charCount = 1;
+                    curChar = c;
+                }
+            }
+            result = result.concat(charCount).concat(curChar);
+            //ns.tprint(result);
+            return result;
+        }
+        case "Encryption I: Caesar Cipher": {
+            //ns.tprint(data);
+            let result = "";
+            for (let i in data[0]) {
+                let c = data[0].charCodeAt(i);
+                if (c == 32) {
+                    result = result.concat(" ");
+                } else if (c >= 65 && c <= 67) {
+                    //ns.tprintf("%s%s => %s%s", data[0][i], c, c + 26 - data[1], String.fromCharCode(c + 26 - data[1]));
+                    result = result.concat(String.fromCharCode(c + 26 - data[1]))
+                } else {
+                    //ns.tprintf("%s%s => %s%s", data[0][i], c, c - data[1], String.fromCharCode(c - data[1]));
+                    result = result.concat(String.fromCharCode(c - data[1]))
+                }
+            }
+            //ns.tprint(result);
+            return result;
+        }
         default:
             return null;
 
