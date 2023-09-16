@@ -4,10 +4,11 @@ export async function main(ns) {
 
     ns.disableLog("sleep");
     ns.disableLog("getHackingLevel");
+    ns.disableLog("getServerMoneyAvailable");
 
     loop: while (true) {
-        ns.print("---");
         await ns.sleep(5000);
+        ns.print("\n");
 
         // Try Creating Scripts
         await createScript("BruteSSH.exe", 50);
@@ -49,27 +50,42 @@ export async function main(ns) {
             }
         }
 
+        ns.printf("Factions with augments:");
         // Filter out factions where reputation is high enough to afford all augmentations
         let factionsToGrind = player.factions
             .reverse()
             .filter((faction) => needsRepForAugment(faction));
 
+        ns.printf("Grind faction rep:");
         // Grind Faction Rep
         let doingWork = false;
-        for (let shouldGrindReputation of [favorBelow(20), favorBelow(70), favorBelow(150), () => true]) {
+        for (let shouldGrindReputation of [favorBelow(20), favorBelow(70), favorBelow(150), attemptToDonate()]) {
             for (let faction of factionsToGrind) {
                 var grindRep = shouldGrindReputation(faction);
                 if (grindRep) {
                     let work = ns.singularity.getCurrentWork();
-                    if (!work || work.type !== "FACTION" || work.factionName !== faction) {
-                        let hacking = ns.singularity.workForFaction(faction, "hacking", ns.singularity.isFocused());
-                        if (!hacking) {
-                            ns.print("hacking failed");
-                            continue;
-                        }
+                    if (work && work.factionName == faction) {
+                        ns.printf("%s: continue working", faction);
+                        continue loop;
                     }
-                    ns.printf(" %s: hacking", faction);
-                    continue loop;
+
+                    let hacking = ns.singularity.workForFaction(faction, "hacking", ns.singularity.isFocused());
+                    if (hacking) {
+                        ns.printf(" %s: hacking", faction);
+                        continue loop;
+                    }
+                    let fieldWork = ns.singularity.workForFaction(faction, "field", ns.singularity.isFocused());
+                    if (fieldWork) {
+                        ns.printf(" %s: field work", faction);
+                        continue loop;
+                    }
+
+                    let securityWork = ns.singularity.workForFaction(faction, "security", ns.singularity.isFocused());
+                    if (securityWork) {
+                        ns.printf(" %s: security work", faction);
+                        continue loop;
+                    }
+                    ns.printf("%s: failed all work types");
                 }
             }
         }
@@ -90,6 +106,16 @@ export async function main(ns) {
             let isFavorBelow = favor + favorGain < favorTarget
             ns.printf(" %s [%s < favorBelow(%s)] %s", faction, favor + favorGain, favorTarget, isFavorBelow);
             return isFavorBelow;
+        }
+    }
+
+    function attemptToDonate() {
+        return (faction) => {
+            let money = ns.getServerMoneyAvailable("home");
+            if (ns.singularity.getFactionFavor(faction) > 150 && money > 1e9) {
+                ns.singularity.donateToFaction(faction, money);
+            }
+            return true;
         }
     }
 
