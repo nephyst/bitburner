@@ -26,34 +26,29 @@ export async function main(ns) {
 
     var output = "Servers:\n";
     for (const [key, value] of Object.entries(servers)) {
+        let properties = [];
+
         let server = ns.getServer(key);
-        
+
         let root = ns.hasRootAccess(key) ? "🔓" : "";
         let backdoor = server.backdoorInstalled ? "🚪" : "";
 
-        let hasRam = server.maxRam;
-        let hasContracts = contracts[key].length > 0;
-        
-        let properties = "";
-        if (hasRam || hasContracts) {
-            properties += "(";
-
-            if (hasRam) {
-                properties += server.maxRam + " GB";
-            }
-
-            if (hasRam && hasContracts) {
-                properties += "; "
-            }
-
-            if (hasContracts) {
-                properties += contracts[key].length + " contracts";
-            }
-
-            properties += ")";
+        if (server.maxRam) {
+            properties = properties.concat(server.maxRam + " GB");
+        }
+        if (contracts[key].length > 0) {
+            properties = properties.concat(contracts[key].length + " contracts");
+        }
+        if (!root || !backdoor) {
+            properties = properties.concat(ns.getServerRequiredHackingLevel(key) + " hacking");
         }
 
-        output = output.concat(sprintf("%s%s%s%s %s\n", "-".repeat(value), key, root, backdoor, properties));
+        let propertiesString = "";
+        if (properties.length > 0) {
+            propertiesString = "(" + properties.join(", ") + ")";
+        }
+
+        output = output.concat(sprintf("%s%s%s%s %s\n", "-".repeat(value), key, root, backdoor, propertiesString));
     }
     ns.tprint(output);
 

@@ -9,6 +9,7 @@ export async function main(ns) {
 
     ns.disableLog("sleep");
     ns.disableLog("getServerMoneyAvailable");
+    ns.disableLog("purchaseServer");
 
     let ram = 4;
 
@@ -41,7 +42,6 @@ export async function main(ns) {
     }
 
     async function doPurchase(server, ram) {
-        ns.print("purchase %s %s", server, ram)
         let money = ns.getServerMoneyAvailable("home");
         let cost = ns.getPurchasedServerCost(ram);
 

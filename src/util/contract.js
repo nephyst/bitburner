@@ -164,23 +164,121 @@ function solveContract(ns, hostname, contract) {
             //ns.tprint(result);
             return result;
         }
+        case "Compression II: LZ Decompression": {
+            //ns.tprint(data);
+            let encrypted = data.split("").reverse();
+            let decoded = "";
+            //ns.tprint(encrypted);
+            while (encrypted.length > 0) {
+                //type 1
+                let k = parseInt(encrypted.pop());
+                //ns.tprintf("Copying %s characters", k);
+                while (k--) {
+                    decoded = decoded.concat(encrypted.pop());
+                }
+                //ns.tprintf("%s", decoded);
+
+                //check if done
+                if (encrypted.length <= 0) {
+                    break;
+                }
+
+                //type 2
+                k = parseInt(encrypted.pop());
+                if (k > 0) {
+                    let l = parseInt(encrypted.pop());
+                    //ns.tprintf("Repeating %s characters; %s positions back", k, l);
+                    while (k--) {
+                        let chunk = decoded.slice(-l).slice(0, 1);
+                        //ns.tprintf("[%s] %s, %s", chunk, -l, -l + 1);
+                        decoded = decoded.concat(chunk);
+                    }
+                } else {
+                    //ns.tprintf("Repeating 0 characters");
+                }
+                //ns.tprintf("%s", decoded);
+            }
+            return decoded;
+        }
         case "Encryption I: Caesar Cipher": {
+            let lshift = data[1];
             //ns.tprint(data);
             let result = "";
             for (let i in data[0]) {
                 let c = data[0].charCodeAt(i);
                 if (c == 32) {
                     result = result.concat(" ");
-                } else if (c >= 65 && c <= 67) {
-                    //ns.tprintf("%s%s => %s%s", data[0][i], c, c + 26 - data[1], String.fromCharCode(c + 26 - data[1]));
-                    result = result.concat(String.fromCharCode(c + 26 - data[1]))
                 } else {
-                    //ns.tprintf("%s%s => %s%s", data[0][i], c, c - data[1], String.fromCharCode(c - data[1]));
-                    result = result.concat(String.fromCharCode(c - data[1]))
+                    let shiftedChar = c - lshift;
+                    if (shiftedChar < 65) {
+                        shiftedChar += 26;
+                    } else if (shiftedChar > 90) {
+                        shiftedChar -= 26;
+                    }
+                    //ns.tprintf("%s%s => %s%s", data[0][i], c, shiftedChar, String.fromCharCode(shiftedChar));
+                    result = result.concat(String.fromCharCode(shiftedChar))
                 }
             }
             //ns.tprint(result);
             return result;
+        }
+        case "Proper 2-Coloring of a Graph": {
+            ns.tprintf("---");
+            ns.tprintf("%s", data);
+            let colors = new Array(data[0]).fill(-1);
+            let edges = {};
+            for (let edge of data[1]) {
+                let source = edge[0];
+                let target = edge[1];
+                edges[source] ??= [];
+                edges[source].push(target);
+                edges[target] ??= [];
+                edges[target].push(source);
+                //ns.tprintf("%s <=> %s", source, target);
+            }
+            ns.tprint(edges);
+
+            while (colors.includes(-1)) {
+                ns.tprintf("Looping over [%s]", colors);
+                let nodeStack = [];
+                for (let i = 0; i < colors.length; i++) {
+                    edges[i] ??= [];
+                    if (colors[i] == -1) {
+                        colors[i] = 0;
+                        ns.tprintf("set node%s = 0; set nodes[%s] = 1", i, edges[i]);
+                        for (let target of edges[i]) {
+                            //ns.tprintf("%s is now 1", target);
+                            colors[target] = 1;
+                            nodeStack.push(target);
+                        }
+                        break;
+                    }
+                }
+                while (nodeStack.length > 0) {
+                    //ns.tprintf("***");
+                    //ns.tprintf("Stack is %s", nodeStack);
+                    let node = nodeStack.pop();
+                    let color = colors[node];
+                    let neighborColor = color ? 0 : 1;
+                    //ns.tprintf("%s [%s] %s to %s", node, edges[node], color, neighborColor);
+                    for (let target of edges[node] ?? []) {
+                        //ns.tprintf("node%s is %s; targeting color %s", target, colors[target], neighborColor);
+                        if (colors[target] == neighborColor) {
+                            //ns.tprintf("%s is already %s", target, colors[target]);
+                        } else if (colors[target] == -1) {
+                            //ns.tprintf("set node%s = %s", target, neighborColor);
+                            colors[target] = neighborColor;
+                            nodeStack.push(target);
+                        } else {
+                            //ns.tprintf("%s <!> %s; node %s = %s; node %s = %s ", node, target, node, colors[node], target, colors[target]);
+                            //return [];
+                            return [];
+                        }
+                    }
+                }
+            }
+            ns.tprint(colors);
+            return colors;
         }
         default:
             return null;

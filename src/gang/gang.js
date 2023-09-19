@@ -23,15 +23,16 @@ export async function main(ns) {
                 || (!gang.isHacking && ["Weapon", "Armor", "Vehicle"].includes(type));
         })
         .sort((a, b) => a.cost - b.cost);
-    
+
     equipment.forEach((e) => {
-        ns.tprintf("%s, (%s) %s", e.name, ns.gang.getEquipmentType(e.name), e.cost);
+        ns.printf("%s, (%s) %s", e.name, ns.gang.getEquipmentType(e.name), e.cost);
     })
 
 
     let lastTick = 0;
     let lastTickLength = 19700;
     let lastGangStats = getPowers(ns);
+    let lastTerritory = gang.territory;
     let lastClashChance = 0;
     let lastIsTickNear = false;
 
@@ -56,6 +57,8 @@ export async function main(ns) {
             let debug = "[";
             let clashChance = 100;
 
+            let currentTerritory = ns.gang.getGangInformation().territory;
+
             if (lastGangStats.length > 0) {
                 for (let j = 0; j < lastGangStats.length; j++) {
                     let name = gangStats[j].name;
@@ -75,17 +78,21 @@ export async function main(ns) {
                         clashChance = chance;
                     }
                 }
-                let delta = ns.formatNumber(clashChance - lastClashChance, 5);
+                let delta = ns.formatNumber(clashChance - lastClashChance, 3);
                 if (!delta.startsWith("-")) {
                     delta = " ".concat(delta);
                 }
-                debug = debug.slice(0, -2).concat("] ").concat(delta).concat("%");
+                debug = debug.slice(0, -2).concat("] ").concat(delta).concat("% clash; ");
+
+                let territoryDelta = ns.formatNumber(100 * (currentTerritory - lastTerritory), 3);
+                debug = debug.concat(sprintf("%s%% territory", territoryDelta));
 
                 ns.print(debug);
             }
 
             lastGangStats = gangStats;
             lastClashChance = clashChance;
+            lastTerritory = currentTerritory;
             if (lastTick > 0) {
                 lastTickLength = now - lastTick;
             }
@@ -93,7 +100,9 @@ export async function main(ns) {
             isTickNear = false;
         }
 
-        assign(ns, gang.isHacking, isTickNear);
+        let isHalfWay = (now - lastTick) / lastTickLength > 0.5;
+
+        assign(ns, gang.isHacking, isTickNear, isHalfWay);
         recruit(ns);
         ascend(ns, gang.isHacking);
         equip(ns, equipment);
@@ -115,10 +124,15 @@ function getPowers(ns) {
 }
 
 let justice = false;
-function assign(ns, isHacking, isTickNear) {
-    let wantedPenalty = ns.gang.getGangInformation().wantedPenalty;
-    let wantedLevel = ns.gang.getGangInformation().wantedLevel;
-    let territory = ns.gang.getGangInformation().territory;
+function assign(ns, isHacking, isTickNear, isHalfWay) {
+    let gangInfo = ns.gang.getGangInformation();
+    let factionName = gangInfo.faction;
+    let wantedPenalty = gangInfo.wantedPenalty;
+    let wantedLevel = gangInfo.wantedLevel;
+    let territory = gangInfo.territory;
+
+    let needsGangRep = ns.singularity.getFactionRep(factionName) < 2e6;
+    //ns.printf("rep %s / %s; %s", ns.formatNumber(ns.singularity.getFactionRep(factionName),2), 2e6, needsGangRep);
 
     ns.gang.getMemberNames().forEach((name) => {
         if (isTickNear && territory < 1) {
@@ -126,9 +140,9 @@ function assign(ns, isHacking, isTickNear) {
         } else if (wantedPenalty < 0.98 && wantedLevel > 10) {
             justice = true;
             ns.gang.setMemberTask(name, "Vigilante Justice");
-        // } else if (name == "BizarreReaper") {
-        //     //ns.gang.setMemberTask(name, "Traffick Illegal Arms");
-        //     ns.gang.setMemberTask(name, "Terrorism");
+            // } else if (name == "BizarreReaper") {
+            //     //ns.gang.setMemberTask(name, "Traffick Illegal Arms");
+            //     ns.gang.setMemberTask(name, "Terrorism");
         } else if (justice && wantedPenalty < 0.995 && wantedLevel > 10) {
             ns.gang.setMemberTask(name, "Vigilante Justice");
         } else if (isHacking) {
@@ -143,9 +157,15 @@ function assign(ns, isHacking, isTickNear) {
             justice = false;
             if (ns.gang.getMemberInformation(name).str < 150) {
                 ns.gang.setMemberTask(name, "Train Combat");
-            } else {
-                //ns.gang.setMemberTask(name, "Traffick Illegal Arms");
+            } else if (ns.gang.getMemberInformation(name).str < 1e5 || needsGangRep) {
                 ns.gang.setMemberTask(name, "Terrorism");
+            } else {
+                if (isHalfWay) {
+                    ns.gang.setMemberTask(name, "Traffick Illegal Arms");
+                } else {
+                    ns.gang.setMemberTask(name, "Terrorism");
+                }
+                
             }
         }
     });
@@ -203,7 +223,7 @@ function equip(ns, equipment) {
 function clash(ns) {
     let clash = true;
     for (let gang of Object.entries(ns.gang.getOtherGangInformation())) {
-        if (gang[0] == ns.gang.getGangInformation().name) {
+        if (gang[0] == ns.gang.getGangInformation().faction) {
             continue;
         }
         if (gang[1].territory > 0 && ns.gang.getChanceToWinClash(gang[0]) < 0.5) {

@@ -6,19 +6,18 @@ export async function main(ns) {
 
     ns.singularity.commitCrime("Rob Store", false);
 
-    ns.run("faction.js");
-    ns.run("/util/purchase.js");
-    ns.run("/hack/pservers.js", 1);
-    ns.run("/hack/deployer.js", 1);
-    ns.run("/gang/gang.js", 1);
-    ns.run("/hacknet/hacknet.js", 1);
+    ns.run("/hack/pservers.js");
+    ns.run("/hack/deployer.js");
+    ns.run("/hacknet/hacknet.js");
+    ns.run("/util/tor.js");
+    ns.run("/util/playerFocus.js");
+    ns.run("/gang/gang.js");
 
     let ramPerThread = ns.getScriptRam("/hack/helper/share.js");
-    let ramAvailable = 0.9 * (ns.getServerMaxRam("home") - ns.getServerUsedRam("home"));
+    let ramAvailable = 0.95 * (ns.getServerMaxRam("home") - ns.getServerUsedRam("home"));
     let threads = Math.floor(ramAvailable / ramPerThread);
 
-    ns.run("/hack/helper/share.js", threads);
+    if (threads > 0) {
+        ns.run("/hack/helper/share.js", threads);
+    }
 }
-
-
-// buy programs

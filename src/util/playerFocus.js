@@ -8,7 +8,7 @@ export async function main(ns) {
 
     loop: while (true) {
         await ns.sleep(5000);
-        //ns.print("\n");
+        ns.print("\n");
 
         // Try Creating Scripts
         await createScript("BruteSSH.exe", 50);
@@ -54,13 +54,32 @@ export async function main(ns) {
         // Filter out factions where reputation is high enough to afford all augmentations
         let factionsToGrind = player.factions
             .reverse()
-            .filter((faction) => ns.gang.getGangInformation()?.faction !== faction)
-            .filter((faction) => needsRepForAugment(faction));
+            .filter((faction) => {
+                let gang = !ns.gang.inGang() || ns.gang.getGangInformation()?.faction !== faction
+                if (!gang) {
+                    ns.printf(" %s [gang]", faction);
+                }
+                return gang;
+            })
+            .filter((faction) => {
+                let needsRep = needsRepForAugment(faction, true);
+                if (!needsRep) {
+                    ns.printf(" %s [complete]", faction);
+                }
+                return needsRep;
+            });
 
         //ns.printf("Grind faction rep:");
         // Grind Faction Rep
         let doingWork = false;
-        for (let shouldGrindReputation of [favorBelow(20), favorBelow(70), favorBelow(150), attemptToDonate()]) {
+        for (let shouldGrindReputation of [
+            //purchasableAugs(1),
+            favorTo(33),
+            purchasableAugs(4),
+            favorTo(75),
+            favorTo(150),
+            attemptToDonate()
+        ]) {
             for (let faction of factionsToGrind) {
                 var grindRep = shouldGrindReputation(faction);
                 if (grindRep) {
@@ -106,7 +125,27 @@ export async function main(ns) {
         }
     }
 
-    function favorBelow(favorTarget) {
+    function purchasableAugs(n) {
+        return (faction) => {
+            let playerAugs = ns.singularity.getOwnedAugmentations(true);
+            let factionRep = ns.singularity.getFactionRep(faction);
+
+            let augsForSale = ns.singularity.getAugmentationsFromFaction(faction)
+                .filter((aug) => !playerAugs.includes(aug));
+            let affordableAugs = augsForSale.filter((aug) => ns.singularity.getAugmentationRepReq(aug) < factionRep);
+            if (n > augsForSale.length) {
+                n = augsForSale.length;
+            }
+
+            let hasNPurchasableAugs = affordableAugs.length < n;
+
+            ns.printf(" %s [%s/%s augs]", faction, affordableAugs.length, n);
+
+            return hasNPurchasableAugs;
+        }
+    }
+
+    function favorTo(favorTarget) {
         return (faction) => {
             let favor = ns.singularity.getFactionFavor(faction);
             let favorGain = ns.singularity.getFactionFavorGain(faction);
@@ -126,9 +165,9 @@ export async function main(ns) {
         }
     }
 
-    function needsRepForAugment(faction) {
+    function needsRepForAugment(faction, debug = false) {
         let playerAugs = ns.singularity.getOwnedAugmentations(true);
-        let factionRep = ns.singularity.getFactionRep(faction) + ns.singularity.getFactionFavorGain(faction);
+        let factionRep = ns.singularity.getFactionRep(faction);
 
         let factionAugs = ns.singularity.getAugmentationsFromFaction(faction)
             .filter((aug) => !playerAugs.includes(aug));
@@ -141,8 +180,10 @@ export async function main(ns) {
         });
         for (let aug of sorted) {
             let augRepCost = ns.singularity.getAugmentationRepReq(aug);
-            ns.printf(" %s [%s] Reputation: %s / %s", faction, aug, ns.formatNumber(factionRep, 2), ns.formatNumber(augRepCost));
             if (augRepCost > factionRep) {
+                if (debug) {
+                    ns.printf(" %s [%s / %s rep] %s", faction, ns.formatNumber(factionRep, 2), ns.formatNumber(augRepCost, 2), aug);
+                }
                 return true;
             }
         }

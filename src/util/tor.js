@@ -2,10 +2,10 @@
 export async function main(ns) {
 
     let files = [
-        "DeepscanV2.exe", //25m
-        "AutoLink.exe", //1m
-        "DeepscanV1.exe", //500k
-        "ServerProfiler.exe", //500k
+        //"DeepscanV2.exe", //25m
+        //"AutoLink.exe", //1m
+        //"DeepscanV1.exe", //500k
+        //"ServerProfiler.exe", //500k
 
         "SQLInject.exe", //250m
         "HTTPWorm.exe", //30m
@@ -14,12 +14,12 @@ export async function main(ns) {
         "BruteSSH.exe" //500k
     ]
 
-    while (files.length > 0) {
-        while (!ns.hasTorRouter()) {
-            ns.singularity.purchaseTor(true);
-            await ns.sleep(10000);
-        }
+    while (!ns.hasTorRouter()) {
+        ns.singularity.purchaseTor(true);
+        await ns.sleep(10000);
+    }
 
+    while (files.length > 0) {
         let length = files.length;
         for (let i = length - 1; i >= 0; i--) {
             let file = files[i];
