@@ -5,10 +5,19 @@ export async function main(ns) {
     ns.disableLog("sleep");
     ns.disableLog("getHackingLevel");
     ns.disableLog("getServerMoneyAvailable");
+    ns.disableLog("singularity.workForFaction");
+
+    let player = ns.getPlayer();
+
+    ns.tprint(player.factions);
+
+    let factionNameLength = player.factions
+        ? player.factions.reduce((a, b) => a.length > b.length ? a : b, "").length
+        : 0; 
 
     loop: while (true) {
         await ns.sleep(5000);
-        ns.print("\n");
+        ns.printf("\n");
 
         // Try Creating Scripts
         await createScript("BruteSSH.exe", 50);
@@ -17,18 +26,7 @@ export async function main(ns) {
         await createScript("HTTPWorm.exe", 500);
         await createScript("SQLInject.exe", 750);
 
-        {
-            // Get hacking level to 250
-            let work = ns.singularity.getCurrentWork();
-            if (ns.getHackingLevel() <= 250) {
-                if (!work || work.type !== "CRIME" || work.crimeType !== "Rob Store") {
-                    ns.singularity.commitCrime("Rob Store", ns.singularity.isFocused());
-                }
-                continue;
-            }
-        }
-
-        let player = ns.getPlayer();
+        
         let playerAugs = ns.singularity.getOwnedAugmentations(true);
 
         // Stay in Sector-12 for CashRoot Starter Kit
@@ -43,69 +41,80 @@ export async function main(ns) {
         faction: for (let faction of ns.singularity.checkFactionInvitations()) {
             for (let aug of ns.singularity.getAugmentationsFromFaction(faction)) {
                 if (!playerAugs.includes(aug)) {
-                    ns.toast(sprintf("Joining %s due to missing %s", faction, aug), "info", 10000);
+                    ns.toast(sprintf("Joining %s [missing %s]", faction, aug), "info", 10000);
                     ns.singularity.joinFaction(faction);
                     continue faction;
                 }
             }
         }
 
+        player = ns.getPlayer();
+        factionNameLength = player.factions.reduce((a, b) => a.length > b.length ? a : b, "").length;
+
         //ns.printf("Factions with augments:");
         // Filter out factions where reputation is high enough to afford all augmentations
         let factionsToGrind = player.factions
             .reverse()
+            // filter gangs with no work
+            .filter((faction) => {
+                let filter = !["Shadows of Anarchy"].includes(faction)
+                if (!filter) {
+                    ns.printf(" %s [skipped]", faction.padStart(factionNameLength));
+                }
+                return filter;
+            })
+            // dont if gang
             .filter((faction) => {
                 let gang = !ns.gang.inGang() || ns.gang.getGangInformation()?.faction !== faction
                 if (!gang) {
-                    ns.printf(" %s [gang]", faction);
+                    ns.printf(" %s [gang]", faction.padStart(factionNameLength));
                 }
                 return gang;
             })
+            // dont if we already have enough rep, or all augs
             .filter((faction) => {
                 let needsRep = needsRepForAugment(faction, true);
                 if (!needsRep) {
-                    ns.printf(" %s [complete]", faction);
+                    ns.printf(" %s [complete]", faction.padStart(factionNameLength));
                 }
                 return needsRep;
-            });
+            })
+            // try to spend money
+            .map((faction) => { attemptToDonate(faction); return faction; });
 
         //ns.printf("Grind faction rep:");
         // Grind Faction Rep
         let doingWork = false;
         for (let shouldGrindReputation of [
-            //purchasableAugs(1),
-            favorTo(33),
-            purchasableAugs(4),
-            favorTo(75),
-            favorTo(150),
-            attemptToDonate()
+            (faction) => { return favorBelow(50)(faction) && purchasableAugs(1)(faction); },
+            (faction) => { return favorBelow(150)(faction) && purchasableAugs(4)(faction); },
+            purchasableAugs(99)
         ]) {
             for (let faction of factionsToGrind) {
                 var grindRep = shouldGrindReputation(faction);
                 if (grindRep) {
                     let work = ns.singularity.getCurrentWork();
                     if (work && work.factionName == faction) {
-                        ns.printf("%s: continue working", faction);
                         continue loop;
                     }
 
                     let hacking = ns.singularity.workForFaction(faction, "hacking", ns.singularity.isFocused());
                     if (hacking) {
-                        ns.printf(" %s: hacking", faction);
+                        ns.printf(" %s: hacking", faction.padStart(factionNameLength));
                         continue loop;
                     }
                     let fieldWork = ns.singularity.workForFaction(faction, "field", ns.singularity.isFocused());
                     if (fieldWork) {
-                        ns.printf(" %s: field work", faction);
+                        ns.printf(" %s: field work", faction.padStart(factionNameLength));
                         continue loop;
                     }
 
                     let securityWork = ns.singularity.workForFaction(faction, "security", ns.singularity.isFocused());
                     if (securityWork) {
-                        ns.printf(" %s: security work", faction);
+                        ns.printf(" %s: security work", faction.padStart(factionNameLength));
                         continue loop;
                     }
-                    ns.printf("%s: failed all work types");
+                    ns.printf(" %s Failed All WorkTypes", faction.padStart(factionNameLength));
                 }
             }
         }
@@ -113,7 +122,12 @@ export async function main(ns) {
         // Default to Homicide to lower karma
         if (!doingWork) {
             let work = ns.singularity.getCurrentWork();
-            if (ns.heart.break() > -54000) {
+            if (ns.getHackingLevel() <= 100) {
+                if (!work || work.type !== "CRIME" || work.crimeType !== "Rob Store") {
+                    ns.singularity.commitCrime("Rob Store", ns.singularity.isFocused());
+                }
+                continue;
+            } else if (ns.heart.break() > -54000) {
                 if (!work || work.type !== "CRIME" || work.crimeType !== "Homicide") {
                     ns.singularity.commitCrime("Homicide", ns.singularity.isFocused());
                 }
@@ -139,30 +153,28 @@ export async function main(ns) {
 
             let hasNPurchasableAugs = affordableAugs.length < n;
 
-            ns.printf(" %s [%s/%s augs]", faction, affordableAugs.length, n);
+            ns.printf(" %s [%s / %s augs]", faction.padStart(factionNameLength), affordableAugs.length, n);
 
             return hasNPurchasableAugs;
         }
     }
 
-    function favorTo(favorTarget) {
+    function favorBelow(favorTarget) {
         return (faction) => {
             let favor = ns.singularity.getFactionFavor(faction);
             let favorGain = ns.singularity.getFactionFavorGain(faction);
             let isFavorBelow = favor + favorGain < favorTarget
-            ns.printf(" %s [favor %s < %s] %s", faction, ns.formatNumber(favor + favorGain, 2), favorTarget, isFavorBelow);
+            ns.printf(" %s [%s / %s favor]", faction.padStart(factionNameLength), ns.formatNumber(favor + favorGain, 2), favorTarget);
             return isFavorBelow;
         }
     }
 
-    function attemptToDonate() {
-        return (faction) => {
-            let money = ns.getServerMoneyAvailable("home");
-            if (ns.singularity.getFactionFavor(faction) > 150 && money > 1e9) {
-                ns.singularity.donateToFaction(faction, money);
-            }
-            return true;
+    function attemptToDonate(faction) {
+        let money = ns.getServerMoneyAvailable("home");
+        if (ns.singularity.getFactionFavor(faction) > 150 && money > 1e9) {
+            ns.singularity.donateToFaction(faction, money);
         }
+        return true;
     }
 
     function needsRepForAugment(faction, debug = false) {
@@ -182,7 +194,7 @@ export async function main(ns) {
             let augRepCost = ns.singularity.getAugmentationRepReq(aug);
             if (augRepCost > factionRep) {
                 if (debug) {
-                    ns.printf(" %s [%s / %s rep] %s", faction, ns.formatNumber(factionRep, 2), ns.formatNumber(augRepCost, 2), aug);
+                    ns.printf(" %s [%s / %s rep] %s", faction.padStart(factionNameLength), ns.formatNumber(factionRep, 2), ns.formatNumber(augRepCost, 2), aug);
                 }
                 return true;
             }

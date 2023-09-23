@@ -35,7 +35,7 @@ export async function main(ns) {
             }
         }   
 
-        await ns.sleep(10000);
+        await ns.sleep(2000);
     }
 
     ns.toast("All files purchased.");

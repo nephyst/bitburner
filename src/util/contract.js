@@ -57,10 +57,13 @@ function solveContract(ns, hostname, contract) {
             return ways[data];
         case "Spiralize Matrix":
             {
+                //ns.tprint(data);
                 let results = [];
 
                 while (data.length > 0) {
                     results = results.concat(data.shift());
+                    data = data.filter((row) => row.length > 0);
+                    //ns.tprintf("> %s", results);
                     if (data.length === 0) {
                         break;
                     }
@@ -68,8 +71,15 @@ function solveContract(ns, hostname, contract) {
                     for (let i = 0; i < data.length; i++) {
                         results.push(data[i].pop());
                     }
+                    data = data.filter((row) => row.length > 0);
+                    //ns.tprintf("v %s",results);
+                    if (data.length === 0) {
+                        break;
+                    }
 
                     results = results.concat(data.pop().reverse());
+                    data = data.filter((row) => row.length > 0);
+                    //ns.tprintf("< %s", results);
                     if (data.length === 0) {
                         break;
                     }
@@ -77,9 +87,16 @@ function solveContract(ns, hostname, contract) {
                     for (let i = data.length; i > 0; i--) {
                         results.push(data[i - 1].shift());
                     }
+                    data = data.filter((row) => row.length > 0);
+                    //ns.tprintf("^ %s", results);
+                    if (data.length === 0) {
+                        break;
+                    }
+                    //ns.tprint(data);
                 }
-
+                //ns.tprint(results)
                 return results;
+                //return null;
             }
         case "Array Jumping Game":
             return null;
@@ -92,7 +109,7 @@ function solveContract(ns, hostname, contract) {
         case "Algorithmic Stock Trader II":
             return ast(ns, null, data);
         case "Algorithmic Stock Trader III":
-            return null;
+            return ast(ns, 2, data[1]);
         case "Algorithmic Stock Trader IV":
             return ast(ns, data[0], data[1]);
         case "Minimum Path Sum in a Triangle":
@@ -140,6 +157,33 @@ function solveContract(ns, hostname, contract) {
             }
         case "Find All Valid Math Expressions":
             return null;
+        case "HammingCodes: Encoded Binary to Integer":
+            //ns.print(data);
+            let parody = 0;
+            for (let i = 0; i < data.length; i++) {
+                if (data[i] == "1") {
+                    parody ^= i;
+                }
+            }
+            //ns.tprint(data);
+            if (parody > 0) {
+                let newValue = data[parody] == "0" ? 1 : 0;
+                //ns.tprintf("Hamming Error at %s; replacing %s with %s", parody, data[parody], newValue);
+                data = data.substring(0, parody) + newValue + data.substring(parody + 1);
+            }
+            //ns.tprint(data);
+
+            let result = "";
+            for (let i = 3; i < data.length; i++) {
+                if (i & (i - 1)) { //shitty check for non-powers of 2
+                    result = result.concat(data[i]);
+                }
+            }
+            //ns.tprint(result);
+
+            //ns.tprint(parseInt(result, 2));
+            return parseInt(result, 2);
+            //return null;
         case "Compression I: RLE Compression": {
             //ns.tprint(data);
             let result = "";
@@ -424,6 +468,10 @@ function oppositeSigns(x, y) {
         return false;
     }
     return ((x ^ y) < 0);
+}
+
+function toBinary(dec) {
+    return (dec >>> 0).toString(2)
 }
 
 function getServers(ns) {
